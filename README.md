@@ -20,6 +20,8 @@ Work in groups of **4 students**. Each group will be assigned a real **company**
 
 Depending on whether your solution needs an AI agent, each group will follow one of two paths.
 
+Note: in this project you are not required to build a UI using replit/bolt/lovable.. AND the database connection should happen within **your code.**
+
 ## Option 1 — Agent as Part of Your Solution
 
 If solving your assigned problem naturally calls for an AI agent (for example: automating a task, generating a recommendation, analyzing information, or producing a decision), build that agent as a core part of your solution.
@@ -56,3 +58,5 @@ Inside your project, use the left sidebar to click **Table Editor**. This is whe
 As a test, send your agent a message with some sample info (for example, a name and age). Check Table Editor for the row Supabase created in response — it should include fields like `session_id`, `name`, `created_at`, and any other fields your app sends.
 
 If your table populates like this after testing your own app, your Supabase connection is working end to end: your app sent it, the agent processed it, and Supabase stored it.
+
+
