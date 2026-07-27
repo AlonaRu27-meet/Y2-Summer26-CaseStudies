@@ -49,13 +49,21 @@ Here's how to check if you have a working database.
 
 Log in to Supabase and look at your Projects page. Find the card for your project (here, `My_Pairs_Project`) and click into it.
 
+![](https://raw.githubusercontent.com/meet-projects/Y2-Summer26-CaseStudies/refs/heads/main/images/first.png)
+
 ### Step 2: Open Table Editor
 
 Inside your project, use the left sidebar to click **Table Editor**. This is where Supabase keeps everything about your data structure — the schema, tables, and rows your app writes to.
 
+![](https://raw.githubusercontent.com/meet-projects/Y2-Summer26-CaseStudies/refs/heads/main/images/second.png)
+
+
 ### Step 3: Confirm the data landed
 
 As a test, send your agent a message with some sample info (for example, a name and age). Check Table Editor for the row Supabase created in response — it should include fields like `session_id`, `name`, `created_at`, and any other fields your app sends.
+
+![](https://raw.githubusercontent.com/meet-projects/Y2-Summer26-CaseStudies/refs/heads/main/images/third.png)
+
 
 If your table populates like this after testing your own app, your Supabase connection is working end to end: your app sent it, the agent processed it, and Supabase stored it.
 
