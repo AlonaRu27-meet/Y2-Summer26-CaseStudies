@@ -2,6 +2,10 @@ import os
 from anthropic import Anthropic
 from dotenv import load_dotenv
 from tavily import TavilyClient
+from pypdf import PdfReader
+import base64
+
+
 
 load_dotenv()
 
@@ -41,10 +45,26 @@ system_message = """
     """
 system_message = system_message + f"\nHere are past improvements you must remember:\n{saved_changes}"
 
+
+def extract_text_from_pdf(pdf_path):
+
+    reader = PdfReader(pdf_path)
+    full_text = ""
+    
+    for page in reader.pages:
+        full_text += page.extract_text() + "\n"
+        
+    return full_text
+
 def search_internet(info):
     response = tavily_client.search(query=info, max_results=3)
 
     return response
+
+def encode_image(image_path):
+    with open(image_path, "rb") as image_file:
+        return base64.b64encode(image_file.read()).decode('utf-8')
+
 
 
 def run_chat():
@@ -53,19 +73,13 @@ def run_chat():
     verified_stories = {}
     total_con_tokens = 0
     reply = ""
+    user_input = input("Paste text, type a PDF (e.g., article.pdf), OR type an image name (e.g., photo.jpg):\n>> ")
     while True:
 
         turn_number = int(len(history) / 2) + 1
         print(f"[Turn {turn_number}] ", end="")
 
-        if turn_number == 1:
-            user_input = input("Please paste the story or article text to verify and translate:\n>> ")
-            print(f"Processing your story...\n")
-            search_results = search_internet(user_input)
-
-            user_input = f"User Story:\n{user_input}\n\nInternet Search Results for Verification:\n{search_results}"
-        else:
-            user_input = input('>> ')
+        
 
         if user_input.startswith('/get '):
             story_name = user_input.replace('/get ', '')
@@ -113,7 +127,7 @@ def run_chat():
             continue
 
         if user_input.lower() == '/summary':
-            print("\n--- Remi is reviewing your chat history... ---")
+            print("\n--- Dot is reviewing your chat history... ---")
             
             summary_response = client.messages.create(
                 model='claude-3-haiku-20240307',
@@ -128,36 +142,62 @@ def run_chat():
 
             continue
 
-        history.append({'role': 'user', 'content': user_input})
+        if turn_number == 1:
+                user_input = input("Paste text, type a PDF (e.g., article.pdf), OR type an image name (e.g., photo.jpg):\n>> ")
+                print(f"Processing your input...\n")
+                    
+                if user_input.lower().endswith(('.jpg', '.jpeg', '.png')):
+                    base64_image = encode_image(user_input)
+                    media_type = "image/jpeg" if user_input.lower().endswith(('.jpg', '.jpeg')) else "image/png"
+                        
+                    user_input = [
+                        {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": base64_image}},
+                        {"type": "text", "text": "Please extract the text from this image and verify its reliability."}
+                    ]
+                    
+                elif user_input.lower().endswith('.pdf'):
+                    story_text = extract_text_from_pdf(user_input) 
+                    search_results = search_internet(story_text)    
+                    user_input = f"User Story:\n{story_text}\n\nInternet Search Results:\n{search_results}"
+                    
+                else:
+                    search_results = search_internet(user_input)  
+                    user_input = f"User Story:\n{user_input}\n\nInternet Search Results:\n{search_results}"
+
+        else:
+            user_input = input('>> ')
+    
+        
+
+    history.append({'role': 'user', 'content': user_input})
         #print('History:', history)
 
-        response = client.messages.create(
+    response = client.messages.create(
             model='claude-haiku-4-5-20251001',
             max_tokens=3000, #number of chars
             temperature=0.7, #creativity level
             system=system_message,
             messages=history
         )
-
-        reply = response.content.text
-        print(f'Claude: {reply}')
-        history.append({'role': 'assistant', 'content': reply})
+    reply = response.content.text
+    print(f'Claude: {reply}')
+    history.append({'role': 'assistant', 'content': reply})
 
         
-        in_tokens = response.usage.input_tokens
-        out_tokens = response.usage.output_tokens
+    in_tokens = response.usage.input_tokens
+    out_tokens = response.usage.output_tokens
 
-        total_tokens = in_tokens + out_tokens
+    total_tokens = in_tokens + out_tokens
 
-        print(f"[Tokens used — In: {in_tokens} | Out: {out_tokens} | Total: {total_tokens}]")
+    print(f"[Tokens used — In: {in_tokens} | Out: {out_tokens} | Total: {total_tokens}]")
 
-        total_con_tokens += total_tokens
-        print (f"[Running Total: {total_con_tokens} tokens]")
+    total_con_tokens += total_tokens
+    print (f"[Running Total: {total_con_tokens} tokens]")
 
-        input_cost = (in_tokens / 1000000) * 0.25
-        output_cost = (out_tokens / 1000000) * 1.25
-        cost_in_cents = (input_cost + output_cost) * 100
-        print(f"[Estimated Cost: {cost_in_cents:.5f}¢]")
+    input_cost = (in_tokens / 1000000) * 0.25
+    output_cost = (out_tokens / 1000000) * 1.25
+    cost_in_cents = (input_cost + output_cost) * 100
+    print(f"[Estimated Cost: {cost_in_cents:.5f}¢]")
 
 if __name__ == "__main__":
     run_chat()
