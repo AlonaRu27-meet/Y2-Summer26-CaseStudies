@@ -6,9 +6,9 @@ from dotenv import load_dotenv
 from tavily import TavilyClient
 from pypdf import PdfReader
 from supabase import create_client, Client
+   
 
 load_dotenv()
-
 client = Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
 tavily_client = TavilyClient(api_key=os.getenv('TAVILY_API_KEY'))
 
